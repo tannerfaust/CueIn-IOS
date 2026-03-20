@@ -9,9 +9,17 @@ import SwiftUI
 
 @main
 struct CueInApp: App {
+    @StateObject private var dataStore = DataStore()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainTabView()
+                .environmentObject(dataStore)
+                .preferredColorScheme(.dark)
+                .onAppear {
+                    // Auto-delete metrics older than 30 days
+                    dataStore.autoDeleteOldMetrics(olderThan: 30)
+                }
         }
     }
 }
