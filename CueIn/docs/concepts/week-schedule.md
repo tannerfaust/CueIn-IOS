@@ -1,6 +1,6 @@
 # Week Schedule
 
-> A 7-day layout that assigns one or more formulas to each day of the week.
+> A 7-day layout that assigns one or more formulas to each day of the week, with optional day names and notes.
 
 ---
 
@@ -14,13 +14,13 @@ The week schedule is the bridge between [Formulas](formulas.md) and the [Today T
 
 ```
 Week Schedule (preset: "Standard Work Week")
-  ├─ Sunday    → "Recovery Day"
-  ├─ Monday    → "Productive Weekday"
-  ├─ Tuesday   → "Productive Weekday"
-  ├─ Wednesday → "Productive Weekday"
-  ├─ Thursday  → "Deep Work Day"
-  ├─ Friday    → "Productive Weekday"
-  └─ Saturday  → "Creative Saturday"
+  ├─ Sunday    → title: "Recovery Reset"   formula: "Recovery Day"
+  ├─ Monday    → title: "Deep Output Day"  formula: "Productive Weekday"
+  ├─ Tuesday   → title: "Tuesday"          formula: "Productive Weekday"
+  ├─ Wednesday → title: "Creator Push"     formula: "Creator Sprint"
+  ├─ Thursday  → title: "Thursday"         formula: "Productive Weekday"
+  ├─ Friday    → title: "Friday"           formula: "Creator Sprint"
+  └─ Saturday  → title: "Recovery Reset"   formula: "Recovery Day"
 ```
 
 ---
@@ -30,7 +30,9 @@ Week Schedule (preset: "Standard Work Week")
 | Property | Type | Description |
 |---|---|---|
 | Name | `String` | Preset label (e.g. "Exam Week", "Standard Week") |
-| Days | `[Day: [Formula]]` | Mapping of 7 days to formula(s) |
+| Days | `[DayAssignment]` | Mapping of 7 days to formulas plus custom metadata |
+| Day Title | `String` | Optional custom label for a day (falls back to the weekday name) |
+| Day Details | `String` | Optional description, theme, or instructions for that day |
 | Status | `active` / `inactive` | Only one preset is active at a time |
 
 ---

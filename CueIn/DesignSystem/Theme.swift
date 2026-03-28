@@ -6,6 +6,105 @@
 //
 
 import SwiftUI
+import UIKit
+
+enum AppearanceMode: String, CaseIterable, Identifiable {
+    static let storageKey = "appearanceMode"
+
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+
+    var preferredColorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
+
+enum TodayProgressDisplayMode: String, CaseIterable, Identifiable {
+    static let storageKey = "todayProgressDisplayMode"
+
+    case elapsed
+    case remaining
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .elapsed: return "Passed %"
+        case .remaining: return "Left %"
+        }
+    }
+
+    var summaryLabel: String {
+        switch self {
+        case .elapsed: return "passed"
+        case .remaining: return "left"
+        }
+    }
+}
+
+enum CommitmentRatingSetting {
+    static let storageKey = "commitmentRatingEnabled"
+    static let defaultValue = true
+}
+
+enum TimeMagnetSetting {
+    static let storageKey = "timeMagnetEnabled"
+    static let defaultValue = true
+}
+
+enum ScheduleOverrunSetting {
+    static let storageKey = "expandDayForOverrun"
+    static let defaultValue = false
+}
+
+enum LazyStartSetting {
+    static let enabledStorageKey = "lazyStartEnabled"
+    static let thresholdStorageKey = "lazyStartThresholdSeconds"
+    static let defaultEnabled = true
+    static let defaultThresholdSeconds: Double = 13 * 3600
+}
+
+enum ExecutionControlsSetting {
+    static let storageKey = "executionControlsEnabled"
+    static let defaultValue = true
+}
+
+enum IncompleteDayMetricsSetting {
+    static let storageKey = "saveMetricsWithoutCompletion"
+    static let defaultValue = false
+}
+
+enum OvertimeCheckInSetting {
+    static let enabledStorageKey = "overtimeCheckInEnabled"
+    static let limitStorageKey = "overtimeCheckInLimitSeconds"
+    static let defaultEnabled = false
+    static let defaultLimitSeconds: Double = 3600
+    static let limitOptions: [Double] = [15 * 60, 30 * 60, 60 * 60, 2 * 3600]
+
+    static func title(for seconds: Double) -> String {
+        let totalMinutes = Int(seconds / 60)
+        if totalMinutes >= 60 {
+            let hours = totalMinutes / 60
+            return hours == 1 ? "1 hour" : "\(hours) hours"
+        }
+        return "\(totalMinutes) min"
+    }
+}
 
 // MARK: - Theme
 
@@ -13,20 +112,23 @@ enum Theme {
     
     // MARK: - Background Colors (true dark, no purple tints)
     
-    static let backgroundPrimary   = Color(hex: "000000")
-    static let backgroundSecondary = Color(hex: "0F0F0F")
-    static let backgroundTertiary  = Color(hex: "1A1A1A")
-    static let backgroundCard      = Color(hex: "141414")
-    static let backgroundElevated  = Color(hex: "1F1F1F")
+    static let backgroundPrimary   = Color.dynamic(light: "F4F1EA", dark: "000000")
+    static let backgroundSecondary = Color.dynamic(light: "FAF8F2", dark: "0F0F0F")
+    static let backgroundTertiary  = Color.dynamic(light: "ECE8DE", dark: "1A1A1A")
+    static let backgroundCard      = Color.dynamic(light: "FFFFFF", dark: "141414")
+    static let backgroundElevated  = Color.dynamic(light: "F1EEE6", dark: "1F1F1F")
     
     // MARK: - Accent (clean white / neutral — no purple)
     
-    static let accent              = Color.white
-    static let accentSecondary     = Color(hex: "A0A0A0")
+    static let accent              = Color.dynamic(light: "111111", dark: "FFFFFF")
+    static let accentSecondary     = Color.dynamic(light: "6F6F73", dark: "A0A0A0")
+    static let onAccent            = Color.dynamic(light: "FFFFFF", dark: "000000")
+    static let selectionBackground = accent
+    static let selectionForeground = onAccent
     
     static var accentGradient: LinearGradient {
         LinearGradient(
-            colors: [Color.white, Color(hex: "C0C0C0")],
+            colors: [accent, accentSecondary],
             startPoint: .leading,
             endPoint: .trailing
         )
@@ -41,9 +143,9 @@ enum Theme {
     
     // MARK: - Text Colors
     
-    static let textPrimary   = Color.white
-    static let textSecondary = Color(hex: "8E8E93")  // iOS secondary label
-    static let textTertiary  = Color(hex: "48484A")  // iOS tertiary label
+    static let textPrimary   = Color.dynamic(light: "111111", dark: "FFFFFF")
+    static let textSecondary = Color.dynamic(light: "5E5F66", dark: "8E8E93")
+    static let textTertiary  = Color.dynamic(light: "8C8D94", dark: "48484A")
     
     // MARK: - Category Colors (the ONLY colors in the app — used as accents)
     
@@ -80,13 +182,31 @@ enum Theme {
     
     // MARK: - Divider
     
-    static let divider = Color(hex: "2C2C2E")
+    static let divider = Color.dynamic(light: "D8D3C8", dark: "2C2C2E")
+    static let surfaceStroke = textPrimary.opacity(0.08)
+    static let glassStroke = textPrimary.opacity(0.08)
+    static let tabBarOverlay = backgroundSecondary.opacity(0.82)
+    static let tabBarHairline = textPrimary.opacity(0.06)
 }
 
 // MARK: - Color Extension (Hex Init)
 
 extension Color {
+    static func dynamic(light: String, dark: String) -> Color {
+        Color(
+            uiColor: UIColor { traitCollection in
+                UIColor(hex: traitCollection.userInterfaceStyle == .dark ? dark : light)
+            }
+        )
+    }
+
     init(hex: String) {
+        self.init(uiColor: UIColor(hex: hex))
+    }
+}
+
+extension UIColor {
+    convenience init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
         var int: UInt64 = 0
         Scanner(string: hex).scanHexInt64(&int)
@@ -99,12 +219,12 @@ extension Color {
         default:
             (a, r, g, b) = (255, 128, 128, 128)
         }
+
         self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255
+            red: CGFloat(r) / 255,
+            green: CGFloat(g) / 255,
+            blue: CGFloat(b) / 255,
+            alpha: CGFloat(a) / 255
         )
     }
 }

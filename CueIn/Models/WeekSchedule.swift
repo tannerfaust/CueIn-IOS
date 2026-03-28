@@ -31,6 +31,18 @@ enum DayOfWeek: Int, Codable, CaseIterable, Identifiable, Comparable {
         case .saturday:  return "Sat"
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .sunday:    return "Sunday"
+        case .monday:    return "Monday"
+        case .tuesday:   return "Tuesday"
+        case .wednesday: return "Wednesday"
+        case .thursday:  return "Thursday"
+        case .friday:    return "Friday"
+        case .saturday:  return "Saturday"
+        }
+    }
     
     var initial: String {
         String(shortName.prefix(1))
@@ -54,11 +66,39 @@ struct DayAssignment: Identifiable, Codable {
     let id: UUID
     var day: DayOfWeek
     var formulaIds: [UUID]
-    
-    init(id: UUID = UUID(), day: DayOfWeek, formulaIds: [UUID] = []) {
+    var title: String
+    var details: String
+
+    var resolvedTitle: String {
+        let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? day.displayName : trimmed
+    }
+
+    init(
+        id: UUID = UUID(),
+        day: DayOfWeek,
+        formulaIds: [UUID] = [],
+        title: String = "",
+        details: String = ""
+    ) {
         self.id = id
         self.day = day
         self.formulaIds = formulaIds
+        self.title = title
+        self.details = details
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, day, formulaIds, title, details
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        day = try container.decode(DayOfWeek.self, forKey: .day)
+        formulaIds = try container.decodeIfPresent([UUID].self, forKey: .formulaIds) ?? []
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? ""
+        details = try container.decodeIfPresent(String.self, forKey: .details) ?? ""
     }
 }
 
@@ -90,11 +130,28 @@ struct WeekSchedule: Identifiable, Codable {
     func formulaIds(for day: DayOfWeek) -> [UUID] {
         assignments.first(where: { $0.day == day })?.formulaIds ?? []
     }
+
+    func assignment(for day: DayOfWeek) -> DayAssignment? {
+        assignments.first(where: { $0.day == day })
+    }
     
     /// Set formula IDs for a specific day
     mutating func setFormulaIds(_ ids: [UUID], for day: DayOfWeek) {
         if let index = assignments.firstIndex(where: { $0.day == day }) {
             assignments[index].formulaIds = ids
+        }
+    }
+
+    mutating func updateAssignment(
+        for day: DayOfWeek,
+        title: String,
+        details: String,
+        formulaIds: [UUID]
+    ) {
+        if let index = assignments.firstIndex(where: { $0.day == day }) {
+            assignments[index].title = title
+            assignments[index].details = details
+            assignments[index].formulaIds = formulaIds
         }
     }
 }

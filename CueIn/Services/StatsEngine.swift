@@ -7,6 +7,38 @@
 
 import Foundation
 
+struct SurgeDayProgress: Identifiable {
+    let date: Date
+    let plannedFocusDuration: TimeInterval
+    let effectiveFocusDuration: TimeInterval
+    let fulfillmentRatio: Double
+    let commitmentRatio: Double
+    let wasOnTarget: Bool
+
+    var id: Date { date }
+}
+
+struct SurgeProgressSnapshot {
+    let surge: Surge
+    let elapsedDays: Int
+    let totalDays: Int
+    let plannedFocusDuration: TimeInterval
+    let effectiveFocusDuration: TimeInterval
+    let fulfillmentRatio: Double
+    let commitmentRatio: Double
+    let onTargetRatio: Double
+    let dayProgress: [SurgeDayProgress]
+
+    var remainingDays: Int {
+        max(0, totalDays - elapsedDays)
+    }
+
+    var timeProgressRatio: Double {
+        guard totalDays > 0 else { return 0 }
+        return min(1, Double(elapsedDays) / Double(totalDays))
+    }
+}
+
 class StatsEngine {
     
     // MARK: - Adherence
@@ -52,6 +84,102 @@ class StatsEngine {
         }
         
         return totals.mapValues { $0 / Double(logs.count) }
+    }
+
+    // MARK: - Commitment
+
+    static func averageCommitment(from logs: [DayLog]) -> Double {
+        weightedCommitment(from: logs.flatMap(\.blockLogs))
+    }
+
+    static func categoryCommitmentAverages(from logs: [DayLog]) -> [BlockCategory: Double] {
+        let entries = logs.flatMap(\.blockLogs).filter { $0.wasChecked }
+        let grouped = Dictionary(grouping: entries, by: \.category)
+        return grouped.mapValues { weightedCommitment(from: $0) }
+    }
+
+    // MARK: - Surge Analytics
+
+    static func surgeProgress(for surge: Surge, logs: [DayLog], asOf date: Date = Date()) -> SurgeProgressSnapshot {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: surge.startDate)
+        let fullEnd = calendar.startOfDay(for: surge.endDate)
+        let today = calendar.startOfDay(for: date)
+
+        let cappedEnd = min(fullEnd, today)
+        let elapsedDays = today < start ? 0 : max(1, (calendar.dateComponents([.day], from: start, to: cappedEnd).day ?? 0) + 1)
+        let totalDays = max(1, surge.durationDays)
+
+        guard elapsedDays > 0 else {
+            return SurgeProgressSnapshot(
+                surge: surge,
+                elapsedDays: 0,
+                totalDays: totalDays,
+                plannedFocusDuration: 0,
+                effectiveFocusDuration: 0,
+                fulfillmentRatio: 0,
+                commitmentRatio: 0,
+                onTargetRatio: 0,
+                dayProgress: []
+            )
+        }
+
+        let focusCategories = Set(surge.focusCategories)
+        let days: [Date] = (0..<elapsedDays).compactMap { offset in
+            calendar.date(byAdding: .day, value: offset, to: start)
+        }
+
+        let points: [SurgeDayProgress] = days.map { day in
+            let dayEntries = logs
+                .first(where: { calendar.isDate($0.date, inSameDayAs: day) })?
+                .blockLogs
+                .filter { focusCategories.contains($0.category) } ?? []
+
+            let planned = dayEntries.reduce(0.0) { $0 + $1.scheduledDuration }
+            let effective = dayEntries.reduce(0.0) { $0 + $1.effectiveDuration }
+            let fulfillment = planned > 0 ? min(1.25, max(0, effective / planned)) : 0
+            let commitment = weightedCommitment(from: dayEntries)
+
+            return SurgeDayProgress(
+                date: day,
+                plannedFocusDuration: planned,
+                effectiveFocusDuration: effective,
+                fulfillmentRatio: fulfillment,
+                commitmentRatio: commitment,
+                wasOnTarget: planned > 0 && fulfillment >= 0.8
+            )
+        }
+
+        let plannedTotal = points.reduce(0.0) { $0 + $1.plannedFocusDuration }
+        let effectiveTotal = points.reduce(0.0) { $0 + $1.effectiveFocusDuration }
+        let fulfillmentRatio = plannedTotal > 0 ? min(1.25, max(0, effectiveTotal / plannedTotal)) : 0
+        let onTargetDays = points.filter(\.wasOnTarget).count
+
+        return SurgeProgressSnapshot(
+            surge: surge,
+            elapsedDays: elapsedDays,
+            totalDays: totalDays,
+            plannedFocusDuration: plannedTotal,
+            effectiveFocusDuration: effectiveTotal,
+            fulfillmentRatio: fulfillmentRatio,
+            commitmentRatio: weightedCommitment(from: logs
+                .filter { surge.includes($0.date, calendar: calendar) && calendar.startOfDay(for: $0.date) <= cappedEnd }
+                .flatMap(\.blockLogs)
+                .filter { focusCategories.contains($0.category) }),
+            onTargetRatio: elapsedDays > 0 ? Double(onTargetDays) / Double(elapsedDays) : 0,
+            dayProgress: points
+        )
+    }
+
+    private static func weightedCommitment(from entries: [BlockLogEntry]) -> Double {
+        let ratedEntries = entries.filter { $0.wasChecked && $0.commitmentRatio != nil && $0.actualDuration > 0 }
+        guard !ratedEntries.isEmpty else { return 0 }
+
+        let totalActual = ratedEntries.reduce(0.0) { $0 + $1.actualDuration }
+        guard totalActual > 0 else { return 0 }
+
+        let totalEffective = ratedEntries.reduce(0.0) { $0 + $1.effectiveDuration }
+        return min(1, max(0, totalEffective / totalActual))
     }
     
     // MARK: - Streaks

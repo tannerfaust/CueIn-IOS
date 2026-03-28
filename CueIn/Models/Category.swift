@@ -47,6 +47,16 @@ enum BlockCategory: String, Codable, CaseIterable, Identifiable {
         case .custom:   return Theme.categoryCustom
         }
     }
+
+    var defaultColorHex: String {
+        switch self {
+        case .work:     return "0A84FF"
+        case .sport:    return "32D74B"
+        case .study:    return "BF5AF2"
+        case .wellness: return "FF9F0A"
+        case .custom:   return "64D2FF"
+        }
+    }
     
     /// Default subcategories for each category
     var defaultSubcategories: [String] {

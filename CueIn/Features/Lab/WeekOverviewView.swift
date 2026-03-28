@@ -9,70 +9,118 @@ import SwiftUI
 
 struct WeekOverviewView: View {
     @ObservedObject var viewModel: LabViewModel
+    var onSelectDay: ((DayOfWeek) -> Void)?
     
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.spacingSM) {
-            Text("Week Overview")
-                .font(Theme.heading3())
-                .foregroundColor(Theme.textPrimary)
-            
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Theme.spacingSM) {
+                HStack(alignment: .top, spacing: Theme.spacingSM) {
                     ForEach(DayOfWeek.allCases) { day in
-                        dayColumn(day)
+                        dayCard(day)
                     }
                 }
+                .padding(.vertical, 2)
             }
         }
     }
     
-    private func dayColumn(_ day: DayOfWeek) -> some View {
+    private func dayCard(_ day: DayOfWeek) -> some View {
         let isToday = day == DayOfWeek.today
+        let assignment = viewModel.assignment(for: day)
         let formulas = viewModel.formulasForDay(day)
-        
-        return VStack(spacing: Theme.spacingXS) {
-            // Day label
-            Text(day.shortName)
-                .font(Theme.caption())
-                .fontWeight(.semibold)
-                .foregroundColor(isToday ? Theme.accent : Theme.textSecondary)
-            
-            // Formula cards
-            VStack(spacing: 4) {
-                if formulas.isEmpty {
-                    RoundedRectangle(cornerRadius: Theme.radiusSM)
-                        .fill(Theme.backgroundTertiary)
-                        .frame(width: 80, height: 60)
-                        .overlay(
-                            Image(systemName: "plus")
-                                .font(.system(size: 14))
-                                .foregroundColor(Theme.textTertiary)
-                        )
-                } else {
-                    ForEach(formulas) { formula in
-                        Button(action: { viewModel.editFormula(formula) }) {
-                            VStack(spacing: 2) {
-                                Text(formula.emoji)
-                                    .font(.system(size: 16))
-                                Text(formula.name)
-                                    .font(.system(size: 9, weight: .medium))
-                                    .foregroundColor(Theme.textPrimary)
-                                    .lineLimit(2)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .frame(width: 80, height: 60)
-                            .background(Theme.backgroundCard)
-                            .clipShape(RoundedRectangle(cornerRadius: Theme.radiusSM))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: Theme.radiusSM)
-                                    .stroke(
-                                        isToday ? Theme.accent.opacity(0.4) : Color.white.opacity(0.05),
-                                        lineWidth: 1
-                                    )
-                            )
+
+        return Group {
+            if let onSelectDay {
+                Button {
+                    onSelectDay(day)
+                } label: {
+                    cardContent(isToday: isToday, day: day, assignment: assignment, formulas: formulas)
+                }
+                .buttonStyle(.plain)
+            } else {
+                cardContent(isToday: isToday, day: day, assignment: assignment, formulas: formulas)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func cardContent(
+        isToday: Bool,
+        day: DayOfWeek,
+        assignment: DayAssignment,
+        formulas: [Formula]
+    ) -> some View {
+        Group {
+            Group {
+                if isToday {
+                    VStack(alignment: .leading, spacing: Theme.spacingSM) {
+                        Text("TODAY")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(Theme.selectionForeground)
+                            .padding(.horizontal, Theme.spacingSM)
+                            .padding(.vertical, 6)
+                            .background(Theme.selectionBackground)
+                            .clipShape(Capsule())
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(assignment.resolvedTitle)
+                                .font(Theme.body1())
+                                .fontWeight(.semibold)
+                                .foregroundColor(Theme.textPrimary)
+                                .lineLimit(1)
+
+                            Text(formulas.isEmpty ? "No formula assigned yet." : formulas.map(\.name).joined(separator: " • "))
+                                .font(.system(size: 12))
+                                .foregroundColor(Theme.textSecondary)
+                                .lineLimit(2)
                         }
-                        .buttonStyle(.plain)
+
+                        Spacer(minLength: 0)
+
+                        HStack(spacing: 8) {
+                            Text(day.displayName)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Theme.textSecondary)
+
+                            Spacer()
+
+                            Text(formulas.isEmpty ? "Edit" : "\(formulas.count) formula\(formulas.count == 1 ? "" : "s")")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(Theme.textTertiary)
+                        }
                     }
+                    .frame(width: 184, height: 126, alignment: .leading)
+                    .padding(Theme.spacingMD)
+                    .background(Theme.backgroundCard)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.radiusMD)
+                            .stroke(Theme.accent.opacity(0.28), lineWidth: 1)
+                    )
+                } else {
+                    VStack(alignment: .leading, spacing: Theme.spacingXS) {
+                        Text(day.shortName.uppercased())
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(Theme.textTertiary)
+
+                        Spacer(minLength: 0)
+
+                        Text(formulas.first?.emoji ?? "·")
+                            .font(.system(size: 18))
+
+                        Text(assignment.resolvedTitle)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Theme.textPrimary)
+                            .lineLimit(2)
+                    }
+                    .frame(width: 88, height: 88, alignment: .leading)
+                    .padding(Theme.spacingSM)
+                    .background(Theme.backgroundCard)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.radiusMD)
+                            .stroke(Theme.surfaceStroke, lineWidth: 1)
+                    )
                 }
             }
         }

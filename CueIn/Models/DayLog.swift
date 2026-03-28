@@ -19,6 +19,7 @@ struct BlockLogEntry: Identifiable, Codable {
     var scheduledDuration: TimeInterval
     var actualDuration: TimeInterval
     var wasChecked: Bool
+    var commitmentRating: Int?
     var startedAt: Date?
     var completedAt: Date?
     
@@ -31,6 +32,7 @@ struct BlockLogEntry: Identifiable, Codable {
         scheduledDuration: TimeInterval,
         actualDuration: TimeInterval = 0,
         wasChecked: Bool = false,
+        commitmentRating: Int? = nil,
         startedAt: Date? = nil,
         completedAt: Date? = nil
     ) {
@@ -42,8 +44,18 @@ struct BlockLogEntry: Identifiable, Codable {
         self.scheduledDuration = scheduledDuration
         self.actualDuration = actualDuration
         self.wasChecked = wasChecked
+        self.commitmentRating = commitmentRating
         self.startedAt = startedAt
         self.completedAt = completedAt
+    }
+
+    var commitmentRatio: Double? {
+        guard let commitmentRating else { return nil }
+        return min(1, max(0, Double(commitmentRating) / 5))
+    }
+
+    var effectiveDuration: TimeInterval {
+        actualDuration * (commitmentRatio ?? 1)
     }
 }
 
@@ -77,7 +89,7 @@ struct DayLog: Identifiable, Codable {
     var categoryDurations: [BlockCategory: TimeInterval] {
         var result: [BlockCategory: TimeInterval] = [:]
         for log in blockLogs {
-            result[log.category, default: 0] += log.actualDuration
+            result[log.category, default: 0] += log.effectiveDuration
         }
         return result
     }
@@ -86,7 +98,7 @@ struct DayLog: Identifiable, Codable {
     var subcategoryDurations: [String: TimeInterval] {
         var result: [String: TimeInterval] = [:]
         for log in blockLogs where !log.subcategory.isEmpty {
-            result[log.subcategory, default: 0] += log.actualDuration
+            result[log.subcategory, default: 0] += log.effectiveDuration
         }
         return result
     }

@@ -9,12 +9,15 @@ import SwiftUI
 
 struct MainTabView: View {
     @EnvironmentObject var dataStore: DataStore
+    @Binding var appearanceModeRawValue: String
     @State private var selectedTab: Tab = .today
+    @StateObject private var formulaEngine = FormulaEngine()
+    @StateObject private var qsTriggerScheduler = QSTriggerScheduler()
     
     enum Tab: String, CaseIterable {
         case today = "Today"
-        case lab = "Lab"
         case monitor = "Monitor"
+        case lab = "Lab"
         case profile = "Profile"
         
         var icon: String {
@@ -33,13 +36,17 @@ struct MainTabView: View {
             Group {
                 switch selectedTab {
                 case .today:
-                    TodayView(dataStore: dataStore)
-                case .lab:
-                    LabView(dataStore: dataStore)
+                    TodayView(dataStore: dataStore, engine: formulaEngine)
                 case .monitor:
-                    MonitorView(dataStore: dataStore)
+                    MonitorView(dataStore: dataStore, engine: formulaEngine)
+                case .lab:
+                    LabView(dataStore: dataStore, engine: formulaEngine)
                 case .profile:
-                    ProfileView(dataStore: dataStore)
+                    ProfileView(
+                        dataStore: dataStore,
+                        appearanceModeRawValue: $appearanceModeRawValue,
+                        engine: formulaEngine
+                    )
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -49,6 +56,9 @@ struct MainTabView: View {
             customTabBar
         }
         .ignoresSafeArea(.keyboard)
+        .onAppear {
+            qsTriggerScheduler.bind(dataStore: dataStore, engine: formulaEngine)
+        }
     }
     
     private var customTabBar: some View {
@@ -80,11 +90,11 @@ struct MainTabView: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     Rectangle()
-                        .fill(Theme.backgroundSecondary.opacity(0.8))
+                        .fill(Theme.tabBarOverlay)
                 )
                 .overlay(alignment: .top) {
                     Rectangle()
-                        .fill(Color.white.opacity(0.05))
+                        .fill(Theme.tabBarHairline)
                         .frame(height: 0.5)
                 }
         )

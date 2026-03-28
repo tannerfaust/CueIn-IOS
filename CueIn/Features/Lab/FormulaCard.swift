@@ -39,14 +39,26 @@ struct FormulaCard: View {
                 Spacer()
                 
                 // Type
-                if formula.type == .mini {
-                    Text("MINI")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundColor(Theme.warning)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Theme.warning.opacity(0.1))
-                        .clipShape(Capsule())
+                HStack(spacing: 6) {
+                    if formula.isTimeMagnetEnabled {
+                        Text("MAGNET")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(Theme.accent)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.accent.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+
+                    if formula.type == .mini {
+                        Text("MINI")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(Theme.warning)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Theme.warning.opacity(0.1))
+                            .clipShape(Capsule())
+                    }
                 }
                 
                 Image(systemName: "chevron.right")

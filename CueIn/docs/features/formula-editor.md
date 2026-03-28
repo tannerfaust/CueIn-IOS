@@ -15,8 +15,10 @@ The Formula Editor is opened from the [Lab Tab](../tabs/lab.md) whenever a user 
 | Element | Description |
 |---|---|
 | **＋ Button** (top) | Add a new block to the formula |
-| **Block List** | Ordered list of blocks — drag to reorder |
-| **Block Inspector** | When a block is selected, configure its properties |
+| **Block List** | Ordered list of blocks — tap to edit, long-press drag to reorder, swipe for quick actions |
+| **Block Inspector** | Sheet for configuring the selected block's properties |
+| **Category Split** | Live calculation of how much scheduled time each category takes inside the formula |
+| **Time Magnet Toggle** | Optional full-formula setting that rounds upcoming block starts to cleaner clock slots |
 
 ---
 
@@ -35,6 +37,15 @@ When adding or editing a block:
 | Priority | Importance level for rearrangement |
 | Mini-Formula | Optionally nest a mini-formula inside the block |
 | Details | Free-text description |
+
+## Current Editor Behaviour
+
+1. Tap **＋** to add a block.
+2. Tap an existing block to edit its name, duration, category, subcategory, priority, and flow logic.
+3. Turn on **Time Magnet** when you want future block starts to align to rounder times.
+4. Long-press a block row and drag it to rearrange the formula order.
+5. Swipe a block row left to reveal quick actions such as edit, duplicate, and delete.
+6. Watch the compact **Category Split** strip update live as blocks are added, edited, or moved.
 
 ---
 

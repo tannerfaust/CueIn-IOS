@@ -68,16 +68,26 @@ struct Block: Identifiable, Codable {
     var colorHex: String                // stored as hex; rendered via Theme
     var details: String
     var isChecked: Bool
+    var commitmentRating: Int?
     var isSmallRepeatable: Bool
     var repeatInterval: TimeInterval?   // seconds between repeats (nil = no repeat)
     
     /// Optional nested mini-formula (blocks inside blocks)
     var miniFormulaId: UUID?
+
+    /// Resolved mini-formula tasks for the active day/runtime state.
+    var miniBlocks: [Block]?
     
     /// Optional scheduled real-world time
     var scheduledTime: Date?
+
+    /// Optional fixed clock time for recurring formulas.
+    var fixedStartSecondsFromMidnight: TimeInterval?
+
+    /// Protect this block's duration from automatic recalibration.
+    var isTimeframeFixed: Bool
     
-    // MARK: - Runtime State (not persisted)
+    // MARK: - Runtime State
     
     var elapsedTime: TimeInterval = 0
     
@@ -107,10 +117,14 @@ struct Block: Identifiable, Codable {
         colorHex: String = "6C63FF",
         details: String = "",
         isChecked: Bool = false,
+        commitmentRating: Int? = nil,
         isSmallRepeatable: Bool = false,
         repeatInterval: TimeInterval? = nil,
         miniFormulaId: UUID? = nil,
-        scheduledTime: Date? = nil
+        miniBlocks: [Block]? = nil,
+        scheduledTime: Date? = nil,
+        fixedStartSecondsFromMidnight: TimeInterval? = nil,
+        isTimeframeFixed: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -122,23 +136,71 @@ struct Block: Identifiable, Codable {
         self.colorHex = colorHex
         self.details = details
         self.isChecked = isChecked
+        self.commitmentRating = commitmentRating
         self.isSmallRepeatable = isSmallRepeatable
         self.repeatInterval = repeatInterval
         self.miniFormulaId = miniFormulaId
+        self.miniBlocks = miniBlocks
         self.scheduledTime = scheduledTime
+        self.fixedStartSecondsFromMidnight = fixedStartSecondsFromMidnight
+        self.isTimeframeFixed = isTimeframeFixed
     }
     
     // MARK: - Codable (skip runtime state)
     
     enum CodingKeys: String, CodingKey {
         case id, name, duration, category, subcategory, priority, flowLogic
-        case colorHex, details, isChecked, isSmallRepeatable, repeatInterval, miniFormulaId, scheduledTime
+        case colorHex, details, isChecked, commitmentRating, isSmallRepeatable, repeatInterval, miniFormulaId, miniBlocks, scheduledTime, fixedStartSecondsFromMidnight, isTimeframeFixed, elapsedTime
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        duration = try container.decode(TimeInterval.self, forKey: .duration)
+        category = try container.decode(BlockCategory.self, forKey: .category)
+        subcategory = try container.decodeIfPresent(String.self, forKey: .subcategory) ?? ""
+        priority = try container.decodeIfPresent(BlockPriority.self, forKey: .priority) ?? .medium
+        flowLogic = try container.decodeIfPresent(FlowLogic.self, forKey: .flowLogic) ?? .flowing
+        colorHex = try container.decodeIfPresent(String.self, forKey: .colorHex) ?? "6C63FF"
+        details = try container.decodeIfPresent(String.self, forKey: .details) ?? ""
+        isChecked = try container.decodeIfPresent(Bool.self, forKey: .isChecked) ?? false
+        commitmentRating = try container.decodeIfPresent(Int.self, forKey: .commitmentRating)
+        isSmallRepeatable = try container.decodeIfPresent(Bool.self, forKey: .isSmallRepeatable) ?? false
+        repeatInterval = try container.decodeIfPresent(TimeInterval.self, forKey: .repeatInterval)
+        miniFormulaId = try container.decodeIfPresent(UUID.self, forKey: .miniFormulaId)
+        miniBlocks = try container.decodeIfPresent([Block].self, forKey: .miniBlocks)
+        scheduledTime = try container.decodeIfPresent(Date.self, forKey: .scheduledTime)
+        fixedStartSecondsFromMidnight = try container.decodeIfPresent(TimeInterval.self, forKey: .fixedStartSecondsFromMidnight)
+        isTimeframeFixed = try container.decodeIfPresent(Bool.self, forKey: .isTimeframeFixed) ?? false
+        elapsedTime = try container.decodeIfPresent(TimeInterval.self, forKey: .elapsedTime) ?? 0
     }
 }
 
 // MARK: - Formatted Helpers
 
 extension Block {
+    var hasFixedStartTime: Bool {
+        fixedStartSecondsFromMidnight != nil || scheduledTime != nil
+    }
+
+    var hasMiniFormula: Bool {
+        miniFormulaId != nil || miniTaskCount > 0
+    }
+
+    var miniTaskCount: Int {
+        miniBlocks?.count ?? 0
+    }
+
+    var completedMiniTaskCount: Int {
+        miniBlocks?.filter(\.isChecked).count ?? 0
+    }
+
+    var allMiniTasksChecked: Bool {
+        guard let miniBlocks, !miniBlocks.isEmpty else { return false }
+        return miniBlocks.allSatisfy(\.isChecked)
+    }
+
     var formattedDuration: String {
         let minutes = Int(duration) / 60
         if minutes >= 60 {
@@ -150,10 +212,12 @@ extension Block {
     }
     
     var formattedRemaining: String {
-        let total = Int(remainingTime)
+        let total = Int(isOverrun ? (elapsedTime - duration) : remainingTime)
         let m = total / 60
         let s = total % 60
-        return String(format: "%d:%02d", m, s)
+        return isOverrun
+            ? String(format: "+%d:%02d", m, s)
+            : String(format: "%d:%02d", m, s)
     }
     
     var categoryColor: Color {

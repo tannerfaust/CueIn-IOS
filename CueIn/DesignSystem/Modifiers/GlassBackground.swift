@@ -19,7 +19,7 @@ struct GlassBackground: ViewModifier {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.glassStroke, lineWidth: 1)
                     )
             )
     }

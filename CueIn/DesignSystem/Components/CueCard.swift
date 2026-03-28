@@ -21,7 +21,7 @@ struct CueCard<Content: View>: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
         .overlay(
             RoundedRectangle(cornerRadius: Theme.radiusMD)
-                .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                .stroke(Theme.surfaceStroke, lineWidth: 1)
         )
     }
 }

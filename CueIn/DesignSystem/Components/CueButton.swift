@@ -44,7 +44,7 @@ struct CueButton: View {
     
     private var foregroundColor: Color {
         switch style {
-        case .primary:     return .black
+        case .primary:     return Theme.onAccent
         case .secondary:   return Theme.textPrimary
         case .destructive: return .white
         case .ghost:       return Theme.textSecondary
@@ -55,7 +55,7 @@ struct CueButton: View {
     private var background: some View {
         switch style {
         case .primary:
-            Color.white
+            Theme.accent
         case .secondary:
             Color.clear
         case .destructive:

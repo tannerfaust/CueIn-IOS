@@ -28,6 +28,7 @@ A formula defines **what a day looks like**. It is an ordered list of [Blocks](b
 | Blocks | `[Block]` | Ordered list of blocks |
 | Type | `full` / `mini` | Whether it's a day formula or a sub-schedule |
 | Status | `active` / `inactive` | Whether it's currently assigned to any day |
+| Time Magnet | `on` / `off` | Optional full-formula setting that snaps upcoming block starts to rounded clock times by priority |
 
 ---
 

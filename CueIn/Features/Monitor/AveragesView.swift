@@ -10,6 +10,8 @@ import SwiftUI
 struct AveragesView: View {
     let categoryAverages: [(category: BlockCategory, duration: TimeInterval)]
     let subcategoryAverages: [(name: String, duration: TimeInterval)]
+    let categoryCommitmentAverages: [(category: BlockCategory, commitment: Double)]
+    var showsCommitment: Bool = false
     
     @State private var expandedCategory: BlockCategory? = nil
     
@@ -38,10 +40,18 @@ struct AveragesView: View {
                                 .foregroundColor(Theme.textPrimary)
                             
                             Spacer()
-                            
-                            Text("avg \(StatsEngine.formatDuration(item.duration))/day")
-                                .font(Theme.mono())
-                                .foregroundColor(Theme.textSecondary)
+
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("avg \(StatsEngine.formatDuration(item.duration))/day")
+                                    .font(Theme.mono())
+                                    .foregroundColor(Theme.textSecondary)
+
+                                if showsCommitment {
+                                    Text(commitmentLabel(for: item.category))
+                                        .font(.system(size: 10, weight: .medium, design: .monospaced))
+                                        .foregroundColor(Theme.textTertiary)
+                                }
+                            }
                             
                             Image(systemName: expandedCategory == item.category ? "chevron.up" : "chevron.down")
                                 .font(.system(size: 10))
@@ -87,5 +97,12 @@ struct AveragesView: View {
                 .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
             }
         }
+    }
+
+    private func commitmentLabel(for category: BlockCategory) -> String {
+        guard let commitment = categoryCommitmentAverages.first(where: { $0.category == category })?.commitment else {
+            return "commit --"
+        }
+        return "commit \(Int((commitment * 100).rounded()))%"
     }
 }

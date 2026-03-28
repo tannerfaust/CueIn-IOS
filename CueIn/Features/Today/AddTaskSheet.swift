@@ -71,12 +71,12 @@ struct AddTaskSheet: View {
                                 // Prominent duration display
                                 Text("\(Int(durationMinutes)) min")
                                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Theme.accent)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, Theme.spacingSM)
                                 
                                 Slider(value: $durationMinutes, in: 5...240, step: 5)
-                                    .tint(.white)
+                                    .tint(Theme.accent)
                                 
                                 HStack {
                                     Text("5m")
@@ -120,7 +120,7 @@ struct AddTaskSheet: View {
                                 }
                             }
                         }
-                        .toggleStyle(SwitchToggleStyle(tint: .white))
+                        .toggleStyle(SwitchToggleStyle(tint: Theme.accent))
                         .padding(Theme.spacingMD)
                         .background(Theme.backgroundCard)
                         .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
@@ -133,7 +133,6 @@ struct AddTaskSheet: View {
                             )
                             .datePickerStyle(.wheel)
                             .labelsHidden()
-                            .colorScheme(.dark)
                             .frame(maxWidth: .infinity)
                             .frame(height: 140)
                             .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
@@ -159,8 +158,8 @@ struct AddTaskSheet: View {
                                         }
                                         .padding(.horizontal, Theme.spacingSM)
                                         .padding(.vertical, Theme.spacingXS)
-                                        .foregroundColor(selectedCategory == cat ? .white : Theme.textSecondary)
-                                        .background(selectedCategory == cat ? Theme.backgroundElevated : Theme.backgroundCard)
+                                        .foregroundColor(selectedCategory == cat ? Theme.selectionForeground : Theme.textSecondary)
+                                        .background(selectedCategory == cat ? Theme.selectionBackground : Theme.backgroundCard)
                                         .clipShape(Capsule())
                                         .overlay(
                                             Capsule()
@@ -181,7 +180,7 @@ struct AddTaskSheet: View {
                             Button(action: { selectedFlowLogic = logic }) {
                                 HStack {
                                     Image(systemName: selectedFlowLogic == logic ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(selectedFlowLogic == logic ? .white : Theme.textTertiary)
+                                        .foregroundColor(selectedFlowLogic == logic ? Theme.selectionForeground : Theme.textTertiary)
                                     
                                     VStack(alignment: .leading, spacing: 2) {
                                         HStack(spacing: 4) {
@@ -205,7 +204,7 @@ struct AddTaskSheet: View {
                                 .padding(Theme.spacingMD)
                                 .background(
                                     selectedFlowLogic == logic
-                                    ? Theme.backgroundElevated
+                                    ? Theme.selectionBackground
                                     : Theme.backgroundCard
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
@@ -256,12 +255,12 @@ struct AddTaskSheet: View {
             }
             .frame(maxWidth: .infinity)
             .padding(Theme.spacingMD)
-            .foregroundColor(isSelected ? .white : Theme.textTertiary)
-            .background(isSelected ? Theme.backgroundElevated : Theme.backgroundCard)
+            .foregroundColor(isSelected ? Theme.selectionForeground : Theme.textTertiary)
+            .background(isSelected ? Theme.selectionBackground : Theme.backgroundCard)
             .clipShape(RoundedRectangle(cornerRadius: Theme.radiusMD))
             .overlay(
                 RoundedRectangle(cornerRadius: Theme.radiusMD)
-                    .stroke(isSelected ? Color.white.opacity(0.2) : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? Theme.accent.opacity(0.16) : Color.clear, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

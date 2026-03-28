@@ -17,18 +17,33 @@ The Today tab is what the user sees most. It displays the **currently active for
 | **Stage Banner** | Thin info strip showing the user's current life stage (pulled from Profile) |
 | **Progression Bar** | Horizontal loading bar spanning 16 h (editable). Starts filling on **Start** press |
 | **Start / Roadblock Button** | Top-right. Before start → `Start`. After start → `Roadblock` |
-| **View Toggle** | `Focused` / `Regular` — controls how blocks are displayed |
+| **Auto Focus** | The list stays focused by default. Scrolling or interacting temporarily expands it, then it falls back after ~15 seconds |
+| **Execution Toggle** | Enables manual execution mode. Adds `Play` to runnable blocks and `Pause` / `Stop` to the currently executing block |
+| **Category Split** | Compact preview before start; after start it collapses into a button that opens the full split |
 | **Schedule Window** | The main content area — a vertical list of blocks |
 | **⋯ Menu** | Top-right three-dot menu with options (e.g. *Change Formula*) |
 
+### Block Gestures
+
+- Swipe a block row left for quick actions like edit or delete.
+- Long-press and drag a block row to rearrange today's running order.
+
+### Execution Mode
+
+- When execution mode is on, every unpassed block shows a `Play` button until one block is actively executing.
+- Only one block can be executing at a time.
+- Playing a future block promotes it to the front of the remaining queue, but never above blocks that are already passed.
+- Once a block is executing, all other `Play` buttons disappear and that row shows `Pause` and `Stop`.
+- The formula timeline still keeps moving in the background and future block durations compact to fit the remaining day.
+- If a block's scheduled time runs out while it is still being executed, execution continues until the user explicitly checks the block off or presses `Stop`.
+
 ---
 
-## View Modes
+## Focus Behaviour
 
-| Mode | Behaviour |
-|---|---|
-| **Focused** | Only the current block is centered and fully visible; surrounding blocks are blurred and shrunk. Multiple blocks shown only if concurrent |
-| **Regular** | Standard scrollable list. Tap a block to expand details |
+- The current block stays visually dominant by default.
+- Surrounding blocks are blurred and shrunk until the user scrolls or interacts with the schedule.
+- After roughly 15 seconds without schedule interaction, the list returns to the focused presentation automatically.
 
 ---
 

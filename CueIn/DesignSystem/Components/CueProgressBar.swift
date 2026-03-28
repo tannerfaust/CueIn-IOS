@@ -12,7 +12,7 @@ struct CueProgressBar: View {
     let progress: Double  // 0.0 – 1.0
     var height: CGFloat = 6
     var showLabel: Bool = true
-    var barColor: Color = .white
+    var barColor: Color = Theme.accent
     var useGradient: Bool = false
     
     @State private var shimmerOffset: CGFloat = -0.3

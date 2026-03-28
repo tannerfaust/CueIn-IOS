@@ -10,8 +10,17 @@ The scheduling algorithm handles two scenarios:
 
 1. **Auto-placement** — when a new task is added without a specified time.
 2. **Rebalancing** — when the schedule is disrupted (roadblock, overrun, early finish).
+3. **Time magnet alignment** — when a formula opts into rounded start times.
 
 Both rely on the **priority** property of [Blocks](../concepts/blocks.md).
+
+When **Time Magnet** is enabled on a full formula, upcoming block starts are nudged toward clock-friendly boundaries:
+
+- High priority: 30-minute starts
+- Medium priority: 15-minute starts
+- Low priority: 10-minute starts
+
+Only **start times** are rounded. End times may stay uneven.
 
 ---
 

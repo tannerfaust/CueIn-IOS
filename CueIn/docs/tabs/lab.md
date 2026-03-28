@@ -14,7 +14,7 @@ The Lab is the design surface of CueIn. Users come here to build new formulas, r
 
 | Element | Description |
 |---|---|
-| **Week Overview** | 7 horizontal blocks (Sun → Sat). Each shows the formula(s) assigned to that day. Users can delete or add formulas per day |
+| **Week Schedule** | 7 editable day cards. Each day can carry a custom name, description, and one or more assigned formulas |
 | **＋ Button** (top-right) | Opens a creation menu (see below) |
 | **Current Formulas** | Section listing all active formulas and mini-formulas with tap-to-edit |
 | **Browse Templates** | Opens a separate page of pre-made formulas organized by category |
@@ -37,10 +37,9 @@ The Lab is the design surface of CueIn. Users come here to build new formulas, r
 
 ### Week Overview
 
-- 7 day-columns, each containing one or more formula cards.
-- **Tap a formula card** → opens it in the Formula Editor.
-- **Swipe / delete** → removes formula from that day.
-- **Add** → pick from library or create new.
+- Each day opens a dedicated editor.
+- Users can rename the day, add a description, and choose which formulas belong there.
+- The first selected formula remains the default one used by Today.
 
 ### Current Formulas
 
